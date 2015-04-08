@@ -13,6 +13,7 @@ import os.path
 import subprocess
 import urlparse
 
+
 class BackupImage(object):
     """A backup image.
 
@@ -22,15 +23,16 @@ class BackupImage(object):
         self.url = urlparse.urlparse(backup_url)
 
     def backup_server(self, server, database):
-        "Backup databases from a server and add them to the backup image."
+        """Backup databases from a server and add them to the backup image."""
         pass
 
     def restore_server(self, server):
-        "Restore the databases in an image on the server"
+        """Restore the databases in an image on the server"""
         pass
 
+
 class PhysicalBackup(BackupImage):
-    "A physical backup of a database"
+    """A physical backup of a database"""
 
     def backup_server(self, server, database="*"):
 
@@ -41,7 +43,7 @@ class PhysicalBackup(BackupImage):
         datadir = server.fetch_config().get('datadir')
         if database == "*":
             database = [d for d in os.listdir(datadir)
-                  if os.path.isdir(os.path.join(datadir, d))]
+                        if os.path.isdir(os.path.join(datadir, d))]
         server.sql("FLUSH TABLES WITH READ LOCK")
         position = fetch_master_position(server)
         if server.host != "localhost":
@@ -51,8 +53,8 @@ class PhysicalBackup(BackupImage):
         server.ssh(["tar", "zpscf", path, "-C", datadir] + database)
         if server.host != "localhost":
             subprocess.check_call([
-                    "scp", server.host + ":" + path, self.url.path
-                    ])
+                "scp", server.host + ":" + path, self.url.path
+            ])
         server.sql("UNLOCK TABLES")
         return position
 
@@ -68,8 +70,8 @@ class PhysicalBackup(BackupImage):
             server.stop()
             if server.host != "localhost":
                 subprocess.check_call([
-                        "scp", self.url.path, server.host + ":" + path
-                        ])
+                    "scp", self.url.path, server.host + ":" + path
+                ])
             server.ssh(["tar", "zxf", path, "-C", datadir])
         finally:
             server.start()

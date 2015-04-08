@@ -4,10 +4,12 @@
 # Use of this source code is goverened by a BSD licence that can be
 # found in the LICENCE file.
 
+
 class Machine(object):
     """Base class for all machines. This hold primitives for
     accomplishing tasks on different hosts."""
     pass
+
 
 class Linux(Machine):
     """Class holding operating system specific methods for (Debian)

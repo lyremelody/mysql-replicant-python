@@ -15,6 +15,7 @@ import time
 
 from .. import errors
 
+
 class UnrecognizedFormatError(errors.Error):
     """Exception thrown when an unrecognizable format is encountered."""
     pass
@@ -23,11 +24,12 @@ class UnrecognizedFormatError(errors.Error):
 def _match_regex(regex, string):
     """Match a regular expression on a string and return the groups as
     a tuple. Throw an UnrecognizedFormatError if it does not match."""
-    
+
     mobj = regex.match(string)
     if not mobj:
         raise UnrecognizedFormatError, string
     return mobj.groups()
+
 
 class LogEvent(object):
     """Base class for all binary log events.
@@ -48,11 +50,12 @@ class LogEvent(object):
         """
         return self.end_pos - self.start_pos
 
+
 class QueryEvent(LogEvent):
     """
     Class for representing query log events.
     """
-    
+
     def __init__(self, event_type, start_log_pos, end_log_pos, server_id,
                  timestamp, thread_id, exec_time, error_code, query):
         LogEvent.__init__(self, event_type, start_log_pos, end_log_pos,
@@ -62,10 +65,12 @@ class QueryEvent(LogEvent):
         self.error_code = error_code
         self.query = query
 
+
 class IntvarEvent(LogEvent):
     """
     Integer variable event.
     """
+
     def __init__(self, event_type, start_log_pos, end_log_pos, timestamp,
                  server_id, name, value):
         LogEvent.__init__(self, event_type, start_log_pos, end_log_pos,
@@ -73,16 +78,19 @@ class IntvarEvent(LogEvent):
         self.name = name
         self.value = value
 
+
 class UservarEvent(LogEvent):
     """
     User variable event.
     """
+
     def __init__(self, event_type, start_log_pos, end_log_pos, timestamp,
                  server_id, name, value):
         LogEvent.__init__(self, event_type, start_log_pos, end_log_pos,
                           timestamp, server_id)
         self.name = name
         self.value = value
+
 
 class XidEvent(LogEvent):
     """
@@ -95,10 +103,12 @@ class XidEvent(LogEvent):
                           timestamp, server_id)
         self.xid = xid
 
+
 class StartEvent(LogEvent):
     """
     Start event or format description log event.
     """
+
     def __init__(self, event_type, start_log_pos, end_log_pos, timestamp,
                  server_id, binlog_version, server_version):
         LogEvent.__init__(self, event_type, start_log_pos, end_log_pos,
@@ -106,8 +116,10 @@ class StartEvent(LogEvent):
         self.binlog_version = binlog_version
         self.server_version = server_version
 
+
 class UnknownEvent(LogEvent):
     """An unknown event"""
+
     def __init__(self, event_type, start_log_pos, end_log_pos, timestamp,
                  server_id, binlog_version, server_version):
         LogEvent.__init__(self, event_type, start_log_pos, end_log_pos,
@@ -142,10 +154,12 @@ class LogEventReader(object):
             mobj = re.match(r'# at (\d+)', line)
         self.line = line
 
+
 class UnrecognizedEventReader(LogEventReader):
     """
     Reader that will always return an event representing 
     """
+
     def __init__(self, event_type, start_pos, end_pos, server_id,
                  timestamp, delimiter):
         LogEventReader.__init__(self, event_type, start_pos, end_pos,
@@ -156,6 +170,7 @@ class UnrecognizedEventReader(LogEventReader):
         self._eat_until_next_event(istream)
         return UnknownEvent(self.event_type, self.start_pos, self.end_pos,
                             self.server_id, self.timestamp)
+
 
 class QueryEventReader(LogEventReader):
     """
@@ -205,6 +220,7 @@ class QueryEventReader(LogEventReader):
                           thread_id, exec_time, error_code,
                           ''.join(query_lines))
 
+
 class IntvarEventReader(LogEventReader):
     """Reader to read an Intvar event for handling auto_increment values."""
 
@@ -225,6 +241,7 @@ class IntvarEventReader(LogEventReader):
         return IntvarEvent(self.event_type, self.start_pos, self.end_pos,
                            self.server_id, self.timestamp, name, value)
 
+
 class UservarEventReader(LogEventReader):
     """Reader for processing a user variable assignment event."""
 
@@ -234,7 +251,7 @@ class UservarEventReader(LogEventReader):
                  timestamp, delimiter):
         LogEventReader.__init__(self, event_type, start_pos, end_pos,
                                 server_id, timestamp, delimiter)
-        
+
     def read(self, rest, istream):
         self.line = istream.next()
         mobj = re.match("set\s+(@\S+)\s*:=\s*(.+)", self.line, re.IGNORECASE)
@@ -244,7 +261,7 @@ class UservarEventReader(LogEventReader):
         self._eat_until_next_event(istream)
         return UservarEvent(self.event_type, self.start_pos, self.end_pos,
                             self.server_id, self.timestamp, name, value)
-            
+
 
 class XidEventReader(LogEventReader):
     TYPE_STRING = "Xid"
@@ -262,6 +279,7 @@ class XidEventReader(LogEventReader):
         self._eat_until_next_event(istream)
         return XidEvent(self.event_type, self.start_pos, self.end_pos,
                         self.server_id, self.timestamp, xid)
+
 
 class StartEventReader(LogEventReader):
     """Start event reader.
@@ -299,12 +317,12 @@ _READER = {
     StartEventReader.TYPE_STRING: StartEventReader,
 }
 
-
 _TYPE_CRE = re.compile(r'#(\d{6}\s+\d?\d:\d\d:\d\d)\s+' # Datetime
                        r'server id\s+(\d+)\s+'          # Server ID
                        r'end_log_pos\s+(\d+)\s+'        # End log pos
                        r'(\w+)')                        # Type
-                       
+
+
 def read_events(istream):
     """
     Generator that accepts a stream of input lines and parses it into
@@ -331,7 +349,7 @@ def read_events(istream):
         mobj = re.match(r'# at (\d+)', line)
         if not mobj:
             if re.match("DELIMITER", line):
-                return          # End of binlog file
+                return # End of binlog file
             else:
                 raise UnrecognizedFormatError, line
         bytepos = mobj.group(1)
@@ -351,6 +369,7 @@ def read_events(istream):
         yield reader.read(line[mobj.end():], istream)
         line = reader.line
 
+
 def mysqlbinlog(files, user=None, passwd=None, host="localhost", port=3306):
     command = [
         "mysqlbinlog",
@@ -358,12 +377,12 @@ def mysqlbinlog(files, user=None, passwd=None, host="localhost", port=3306):
         "--read-from-remote-server",
         "--host=%s" % (host,),
         "--port=%s" % (port,),
-        ]
+    ]
     if user:
         command.append("--user=%s" % user)
     if passwd:
         command.append("--password=%s" % passwd)
-        
+
     proc = subprocess.Popen(command + files, stdout=subprocess.PIPE)
 
     read_events(proc.stdout)

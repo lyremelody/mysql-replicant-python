@@ -15,7 +15,8 @@ import warnings
 from mysql.replicant import (
     configmanager,
     roles,
-    )
+)
+
 
 #pylint: disable-msg=W0232
 class Position(collections.namedtuple('Position', ['file', 'pos'])):
@@ -32,6 +33,7 @@ class Position(collections.namedtuple('Position', ['file', 'pos'])):
 
 #pylint: disable-msg=C0103
 User = collections.namedtuple('User', ['name', 'passwd'])
+
 
 class Server(object):
     """A representation of a MySQL server.
@@ -62,9 +64,10 @@ class Server(object):
             else:
                 self.__row = self.__cursor.fetchone()
                 return row
-        
+
         def __getitem__(self, key):
             from mysql.replicant.errors import EmptyRowError
+
             if self.__row is not None:
                 return self.__row[key]
             else:
@@ -72,14 +75,15 @@ class Server(object):
 
         def __str__(self):
             from mysql.replicant.errors import EmptyRowError
+
             if len(self.__row) == 1:
                 return str(self.__row.values()[0])
             else:
                 raise EmptyRowError
-    
+
     def __init__(self, name, sql_user, ssh_user, machine,
                  config_manager=configmanager.ConfigManagerFile(),
-                 role=roles.Vagabond(), 
+                 role=roles.Vagabond(),
                  server_id=None, host='localhost', port=3306,
                  socket='/tmp/mysqld.sock', defaults_file=None,
                  config_section='mysqld'):
@@ -147,7 +151,7 @@ class Server(object):
         self.server_id = server_id
         self.socket = socket
         self.defaults_file = defaults_file
-        
+
         self.config_section = config_section
 
         self.__machine = machine
@@ -159,7 +163,7 @@ class Server(object):
 
         self.__role = role
         self.imbue(role)
-            
+
     def _connect(self, database=''):
         """Method to connect to the server, preparing for execution of
         SQL statements.  If a connection is already established, this
@@ -173,18 +177,18 @@ class Server(object):
                 passwd=self.sql_user.passwd)
         elif database:
             self.__conn.select_database(database)
-                                      
+
     def imbue(self, role):
         """Imbue a server with a new role."""
         self.__role.unimbue(self)
         self.__role = role
         self.__role.imbue(self)
-        
+
     def disconnect(self):
         """Method to disconnect from the server."""
         self.__conn = None
         return self
-                                      
+
     def sql(self, command, args=None, database=''):
         """Execute a SQL command on the server.
 

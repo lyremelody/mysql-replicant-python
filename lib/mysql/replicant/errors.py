@@ -8,39 +8,47 @@
 
 """
 
+
 class Error(Exception):
     """Base class for all exceptions in this package
     """
     pass
+
 
 class EmptyRowError(Error):
     """Class to handle attempts to fetch a key from an empty row.
     """
     pass
 
+
 class NoOptionError(Error):
     "Exception raised when ConfigManager does not find the option"
     pass
 
+
 class SlaveNotRunningError(Error):
     "Exception raised when slave is not running but were expected to run"
     pass
+
 
 class NotMasterError(Error):
     """Exception raised when the server is not a master and the
     operation is illegal."""
     pass
 
+
 class NotSlaveError(Error):
     """Exception raised when the server is not a slave and the
     operation is illegal."""
     pass
+
 
 class QueryStatusVariableError(Error):
     """Exception raised when a bad number for a non-existing status
     variable is seen in a query event.
     """
     pass
+
 
 class BinlogMagicError(Error):
     """Exception raised when the binary log magic number is not
@@ -49,16 +57,19 @@ class BinlogMagicError(Error):
     """
     pass
 
+
 class UnrecognizedSchemeError(Error):
     """Exception raised when a URL is used with an unrecognized scheme.
     """
     pass
+
 
 class BadStatusVariableError(Error):
     """Exception raised when requesting a non-existant status
     variable.
     """
     pass
+
 
 class BadMagicError(Error):
     """Exception raised when the magic for a binary log is incorrect.

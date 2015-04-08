@@ -7,6 +7,7 @@
 import ConfigParser
 import MySQLdb as _connector
 
+
 class Role(object):
     """Base class for representing a server role.
 
@@ -24,6 +25,7 @@ class Role(object):
 
        role.imbue(server)
     """
+
     def _set_server_id(self, server, config):
         """A helper method that will set the server id unless is was
         already set. In that case, we correct our own server id to be
@@ -33,7 +35,6 @@ class Role(object):
         except ConfigParser.NoOptionError:
             config.set('server-id', server.server_id)
 
-        
     def _create_repl_user(self, server, user):
         """Helper method to create a replication user for the
         server.
@@ -82,6 +83,7 @@ class Role(object):
     def unimbue(self, server):
         pass
 
+
 class Vagabond(Role):
     """A vagabond is a server that is not part of the deployment."""
 
@@ -90,6 +92,7 @@ class Vagabond(Role):
 
     def unimbue(self, server):
         pass
+
 
 class Master(Role):
     """A master slave is a server whose purpose is to act as a
@@ -132,11 +135,12 @@ class Master(Role):
             pass
         finally:
             server.start()
-            
+
         # Add a replication user
         self._create_repl_user(server, self.__user)
         server.repl_user = self.__user
         server.disconnect()
+
 
 class Final(Role):
     """A final server is a server that does not have a binary log.
@@ -157,6 +161,7 @@ class Final(Role):
         server.stop().replace_config(config).start()
 
         server.repl_user = self.__master.repl_user
+
 
 class Relay(Role):
     """A relay server is a server whose sole purpose is to forward
@@ -185,4 +190,4 @@ class Relay(Role):
                 server.sql("ALTER TABLE %s.%s ENGINE=BLACKHOLE" %
                            (database, table["Tables_in_" + database]))
         server.sql("SET SQL_LOG_BIN = 1")
-        
+

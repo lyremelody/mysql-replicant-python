@@ -8,10 +8,11 @@ import os, shutil, re, tempfile, subprocess, ConfigParser
 
 _NONE_MARKER = "<>"
 
+
 def _fetch_file(host, user, filename):
     """Function to fetch a file from the server and copy it to the
     local machine. A temporary file name is created for """
-    
+
     handle, tmpfile = tempfile.mkstemp(text=True)
     os.close(handle)
 
@@ -22,6 +23,7 @@ def _fetch_file(host, user, filename):
         shutil.copyfile(filename, tmpfile)
     return tmpfile
 
+
 def _replace_file(host, user, filename, source):
     if host != "localhost":
         target = user + "@" + host + ":" + filename
@@ -29,12 +31,13 @@ def _replace_file(host, user, filename, source):
     else:
         shutil.copyfile(source, filename)
 
+
 class ConfigManagerFile(object):
-    "Configuration manager that fetches and restores files directly."
+    """Configuration manager that fetches and restores files directly."""
 
     class Config(object):
         """Class for handling server configuration files."""
-    
+
         def __init__(self, path=None, section=None):
             self.__config = None
             self.__section = section or 'mysqld'
@@ -112,12 +115,11 @@ class ConfigManagerFile(object):
                 value = _NONE_MARKER
             self.__config.set(self.__section, option, str(value))
 
-
         def remove(self, option):
             """Method to remove the option from the configuration
             entirely."""
             self.__config.remove_option(self.__section, option)
-    
+
     def fetch_config(self, server, path=None):
         """Method to fetch the configuration options from the server
         into memory.
@@ -126,7 +128,7 @@ class ConfigManagerFile(object):
         copies the settings. Once the config settings are replaced,
         the temporary file is removed and to edit the options again,
         it is necessary to fetch the file again."""
-        
+
         if not path:
             path = server.defaults_file
         tmpfile = _fetch_file(server.host, server.ssh_user.name, path)
@@ -135,7 +137,7 @@ class ConfigManagerFile(object):
     def replace_config(self, server, config, path=None):
         """Method to replace the configuration file with the options
         in this object."""
-        
+
         if not path:
             path = server.defaults_file
 

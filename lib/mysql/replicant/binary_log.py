@@ -11,7 +11,7 @@ UNKNOWN_EVENT = 0
 START_EVENT = 1
 QUERY_EVENT = 2
 STOP_EVENT = 3
-ROTATE_EVENT = 4 
+ROTATE_EVENT = 4
 INTVAR_EVENT = 5
 LOAD_EVENT = 6
 SLAVE_EVENT = 7
@@ -43,11 +43,13 @@ import time
 
 import mysql.replicant.errors as _errors
 
+
 class _DecodeBuffer(object):
     """Helper class to decode a string by feeding it pieces of format
     strings.
     """
-    def __init__(self, string, offset = 0):
+
+    def __init__(self, string, offset=0):
         self.__string = string
         self.offset = offset
 
@@ -61,7 +63,7 @@ class _DecodeBuffer(object):
         self.offset += frm.size
         return result
 
-    def readstr(self, count = None):
+    def readstr(self, count=None):
         if count is None:
             count, = struct.unpack_from("<B", self.__string, self.offset)
             self.offset += 1
@@ -69,11 +71,13 @@ class _DecodeBuffer(object):
         self.offset += count
         return result
 
+
 _EVENT_FRM = """# at {0}
 # {1} {2} - server ID: {3}, end_log_pos: {4}"""
 
+
 class Event(object):
-    "Base class for all events"
+    """Base class for all events"""
 
     type_name = None
 
@@ -88,18 +92,18 @@ class Event(object):
         self.size = stub.size
         self.end_pos = stub.end_pos
         self.flags = stub.flags
-    
+
     def __str__(self):
         return self.to_string()
 
     def format(self, frm):
         l_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.when))
         frm.format({
-                'pos': self.pos, 'type_name': self.type_name,
-                'type_code': self.type_code, 'size': self.size,                
-                'server_id': self.server_id, 'end_pos': self.end_pos,
-                'datetime': l_time, 'when': self.when,
-                })
+            'pos': self.pos, 'type_name': self.type_name,
+            'type_code': self.type_code, 'size': self.size,
+            'server_id': self.server_id, 'end_pos': self.end_pos,
+            'datetime': l_time, 'when': self.when,
+        })
 
     def to_string(self):
         return self._mkstr()
@@ -115,21 +119,24 @@ class Event(object):
             result += ", {0}\n".format(', '.join(ext_str))
         return result
 
+
 class UnknownEvent(Event):
-    "An Unknown event"
+    """An Unknown event"""
 
     type_name = "Unknown"
 
     def __init__(self, stub):
         Event.__init__(stub)
 
+
 class StartEvent(Event):
-    "A start event"
+    """A start event"""
 
     type_name = "Start"
 
     def __init__(self, stub):
         super(StartEvent, self).__init__(stub)
+
 
 class QueryEvent(Event):
     type_name = "Query"
@@ -163,7 +170,7 @@ class QueryEvent(Event):
                 self.autoinc = {
                     'increment': val[0],
                     'offset': val[1],
-                    }
+                }
             elif code == 4:                     # Q_CHARSET_CODE
                 self.charset = dbuf.readfrm("6B")[0]
             elif code == 5:                     # Q_TIME_ZONE_CODE
@@ -182,7 +189,7 @@ class QueryEvent(Event):
                 self.invoker = {
                     'user': dbuf.readstr(),
                     'host': dbuf.readstr(),
-                    }
+                }
             else:
                 msg = "Unknown Status Variable Code: {0}".format(code)
                 raise _errors.BadStatusVariableError(msg)
@@ -196,16 +203,17 @@ class QueryEvent(Event):
             'thread_id': self.thread_id,
             'exec_time': self.exec_time,
             'error_code': self.error_code,
-            })
-        result += self.query  + ";"
+        })
+        result += self.query + ";"
         return result
-        
+
+
 class StopEvent(Event):
     type_name = "Stop"
 
     def __init__(self, stub):
         super(StopEvent, self).__init__(stub)
-        
+
 
 class RotateEvent(Event):
     type_name = "Rotate"
@@ -216,11 +224,13 @@ class RotateEvent(Event):
         self.next_pos = dbuf.readfrm("<Q")[0]
         self.next_file = dbuf.readstr(stub.size - dbuf.offset)
 
+
 _INTVAR_TYPE = [
-    { 'brief': 'Invalid int', 'ident': '*INVALID*' },
-    { 'brief': 'Last insert ID', 'ident': 'LAST_INSERT_ID' },
-    { 'brief': 'Insert ID', 'ident': 'INSERT_ID' },
-    ]
+    {'brief': 'Invalid int', 'ident': '*INVALID*'},
+    {'brief': 'Last insert ID', 'ident': 'LAST_INSERT_ID'},
+    {'brief': 'Insert ID', 'ident': 'INSERT_ID'},
+]
+
 
 class IntvarEvent(Event):
     type_name = "Intvar"
@@ -235,9 +245,10 @@ class IntvarEvent(Event):
         intvar_type = _INTVAR_TYPE[self.variable]
         result = super(IntvarEvent, self)._mkstr({
             'variable': intvar_type['brief'],
-            })
+        })
         result += "SET {0} = {1};".format(intvar_type['ident'], self.value)
         return result
+
 
 class LoadEvent(Event):
     type_name = "Load"
@@ -245,11 +256,13 @@ class LoadEvent(Event):
     def __init__(self, stub):
         super(LoadEvent, self).__init__(stub)
 
+
 class SlaveEvent(Event):
     type_name = "Slave"
 
     def __init__(self, stub):
         super(SlaveEvent, self).__init__(stub)
+
 
 class CreateFileEvent(Event):
     type_name = "CreateFile"
@@ -257,11 +270,13 @@ class CreateFileEvent(Event):
     def __init__(self, stub):
         super(CreateFileEvent, self).__init__(stub)
 
+
 class AppendBlockEvent(Event):
     type_name = "AppendBlock"
 
     def __init__(self, stub):
         super(AppendBlockEvent, self).__init__(stub)
+
 
 class ExecLoadEvent(Event):
     type_name = "ExecLoad"
@@ -269,11 +284,13 @@ class ExecLoadEvent(Event):
     def __init__(self, stub):
         super(ExecLoadEvent, self).__init__(stub)
 
+
 class DeleteFileEvent(Event):
     type_name = "DeleteFile"
 
     def __init__(self, stub):
         super(DeleteFileEvent, self).__init__(stub)
+
 
 class NewLoadEvent(Event):
     type_name = "NewLoad"
@@ -281,32 +298,38 @@ class NewLoadEvent(Event):
     def __init__(self, stub):
         super(NewLoadEvent, self).__init__(stub)
 
+
 class RandEvent(Event):
     type_name = "Rand"
 
     def __init__(self, stub):
         super(RandEvent, self).__init__(stub)
 
+
 _VALUE_TYPE = [
     # STRING_RESULT
-    { 'name': 'String',
-      'decode': (lambda d,l: d.readstr(l)),
-      },
+    {
+        'name': 'String',
+        'decode': (lambda d, l: d.readstr(l)),
+    },
 
     # REAL_RESULT
-    { 'name': 'Real',
-      'decode': (lambda d,l: d.readfrm("<d")[0]),
-      },
+    {
+        'name': 'Real',
+        'decode': (lambda d, l: d.readfrm("<d")[0]),
+    },
     # INT_RESULT
-    { 'name': 'Integer',
-      'decode': (lambda d,l: d.readfrm("<Q")[0]),
-      },
+    {
+        'name': 'Integer',
+        'decode': (lambda d, l: d.readfrm("<Q")[0]),
+    },
     # ROW_RESULT
-    { 'name': 'Row' },
+    {'name': 'Row'},
 
     # DECIMAL_RESULT
-    { 'name': 'Decimal' },
-    ]
+    {'name': 'Decimal'},
+]
+
 
 class UservarEvent(Event):
     type_name = "Uservar"
@@ -327,10 +350,10 @@ class UservarEvent(Event):
     def to_string(self):
         result = super(UservarEvent, self)._mkstr({
             'value_type': self.__valtype['name'],
-            })
+        })
         result += "SET @`{0}` = {1};".format(self.variable, self.value)
         return result
-        
+
 
 class FormatDescriptionEvent(Event):
     type_name = "FormatDescription"
@@ -343,11 +366,13 @@ class FormatDescriptionEvent(Event):
         self.server_version = field[1].rstrip('\0')
         self.created = field[2]
 
+
 class XidEvent(Event):
     type_name = "Xid"
 
     def __init__(self, stub):
         super(XidEvent, self).__init__(stub)
+
 
 class BeginLoadQueryEvent(Event):
     type_name = "BeginLoadQuery"
@@ -355,11 +380,13 @@ class BeginLoadQueryEvent(Event):
     def __init__(self, stub):
         super(BeginLoadQueryEvent, self).__init__(stub)
 
+
 class ExecuteLoadQueryEvent(Event):
     type_name = "ExecuteLoadQuery"
 
     def __init__(self, stub):
         super(ExecuteLoadQueryEvent, self).__init__(stub)
+
 
 class TableMapEvent(Event):
     type_name = "TableMap"
@@ -367,11 +394,13 @@ class TableMapEvent(Event):
     def __init__(self, stub):
         super(TableMapEvent, self).__init__(stub)
 
+
 class PreGaWriteRowsEvent(Event):
     type_name = "PreGaWriteRows"
 
     def __init__(self, stub):
         super(PreGaWriteRowsEvent, self).__init__(stub)
+
 
 class PreGaUpdateRowsEvent(Event):
     type_name = "PreGaUpdateRows"
@@ -379,11 +408,13 @@ class PreGaUpdateRowsEvent(Event):
     def __init__(self, stub):
         super(PreGaUpdateRowsEvent, self).__init__(stub)
 
+
 class PreGaDeleteRowsEvent(Event):
     type_name = "PreGaDeleteRows"
 
     def __init__(self, stub):
         super(PreGaDeleteRowsEvent, self).__init__(stub)
+
 
 class WriteRowsEvent(Event):
     type_name = "WriteRows"
@@ -391,11 +422,13 @@ class WriteRowsEvent(Event):
     def __init__(self, stub):
         super(WriteRowsEvent, self).__init__(stub)
 
+
 class UpdateRowsEvent(Event):
     type_name = "UpdateRows"
 
     def __init__(self, stub):
         super(UpdateRowsEvent, self).__init__(stub)
+
 
 class DeleteRowsEvent(Event):
     type_name = "DeleteRows"
@@ -403,11 +436,13 @@ class DeleteRowsEvent(Event):
     def __init__(self, stub):
         super(DeleteRowsEvent, self).__init__(stub)
 
+
 class IncidentEvent(Event):
     type_name = "Incident"
 
     def __init__(self, stub):
         super(IncidentEvent, self).__init__(stub)
+
 
 class HeartbeatEvent(Event):
     type_name = "Heartbeat"
@@ -415,17 +450,20 @@ class HeartbeatEvent(Event):
     def __init__(self, stub):
         super(HeartbeatEvent, self).__init__(stub)
 
+
 class IgnorableEvent(Event):
     type_name = "Ignorable"
 
     def __init__(self, stub):
         super(IgnorableEvent, self).__init__(stub)
 
+
 class RowsQueryEvent(Event):
     type_name = "RowsQuery"
 
     def __init__(self, stub):
         super(RowsQueryEvent, self).__init__(stub)
+
 
 _CLASS_FOR = [
     UnknownEvent,
@@ -458,7 +496,7 @@ _CLASS_FOR = [
     HeartbeatEvent,
     IgnorableEvent,
     RowsQueryEvent,
-    ]
+]
 
 
 class Stub(object):             # pylint: disable=R0902
@@ -497,10 +535,13 @@ class Stub(object):             # pylint: disable=R0902
         except IndexError:
             return UnknownEvent(self)
 
+
 class Reader(object):
-    "Base class for all readers."
+    """Base class for all readers."""
+
     def __init__(self, istream):
         self.istream = istream
+
 
 class FileReader(Reader):
     """Class to read the binary log from files.
@@ -523,7 +564,8 @@ class FileReader(Reader):
 # TODO: Add a MySQL Reader
 _READER = {
     'file': FileReader,
-    }
+}
+
 
 def create_reader(url):
     """Create a reader given a URL.
@@ -548,8 +590,9 @@ def create_reader(url):
         msg = "'{0}' is not a recognized scheme".format(scheme)
         raise _errors.UnrecognizedSchemeError(msg)
 
+
 class BinaryLog(object):
-    "Container for sequence of events"
+    """Container for sequence of events"""
 
     def __init__(self, reader):
         """Create a binary log.
